@@ -23,7 +23,9 @@ npm run build    # → dist/
 npm run preview
 ```
 
-Deploy to GitHub Pages (publishes `dist/` to the `gh-pages` branch):
+Deployment: pushing to `main` auto-builds and publishes to GitHub Pages via the
+workflow in `.github/workflows/deploy.yml`. To publish manually (e.g. if Actions
+is unavailable) push a built `dist/` to the `gh-pages` branch:
 
 ```bash
 npm run deploy

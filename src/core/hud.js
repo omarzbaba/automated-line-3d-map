@@ -62,6 +62,7 @@ export function createHud(entries, onSelect) {
   const domainEl = document.getElementById('infoDomain');
   const nameEl = document.getElementById('infoName');
   const descEl = document.getElementById('infoDesc');
+  const statsEl = document.getElementById('infoStats');
   const metaEl = document.getElementById('infoMeta');
 
   function showCard(station) {
@@ -71,6 +72,20 @@ export function createHud(entries, onSelect) {
     domainEl.textContent = (DOMAINS[station.domain]?.label) || station.domain;
     nameEl.textContent = station.name;
     descEl.textContent = station.desc || '';
+
+    statsEl.innerHTML = '';
+    (station.stats || []).forEach(([label, value]) => {
+      const row = document.createElement('div');
+      row.className = 'stat';
+      const dt = document.createElement('dt');
+      dt.textContent = label;
+      const dd = document.createElement('dd');
+      dd.textContent = value;
+      dd.style.color = hex;
+      row.append(dt, dd);
+      statsEl.appendChild(row);
+    });
+
     metaEl.innerHTML = '';
     (station.meta || []).forEach((m) => {
       const li = document.createElement('li');

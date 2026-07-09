@@ -60,8 +60,12 @@ export function createLabels(container, entries, onSelect) {
         sub.textContent = model;
         sub.style.pointerEvents = 'auto';
         sub.addEventListener('click', () => onSelect(station));
+        // A unit anchor may be a plain x offset or a {x, z} local position.
+        const c = centers[i];
+        const cx = typeof c === 'object' && c ? c.x : (c ?? 0);
+        const cz = typeof c === 'object' && c ? c.z : station.d / 2 + 0.2;
         const subObj = new CSS2DObject(sub);
-        subObj.position.set(centers[i] ?? 0, station.h + 1.3, station.d / 2 + 0.2);
+        subObj.position.set(cx, station.h + 1.3, cz);
         group.add(subObj);
         subEls.push(sub);
       });
