@@ -12,8 +12,8 @@ export function createCamera(renderer) {
   );
 
   const OVERVIEW = {
-    pos: new THREE.Vector3(centerX - 112, 124, 250),
-    target: new THREE.Vector3(centerX + 14, 5, -6),
+    pos: new THREE.Vector3(centerX - 130, 158, 214),
+    target: new THREE.Vector3(centerX, 4, -9),
   };
   camera.position.copy(OVERVIEW.pos);
 

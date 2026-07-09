@@ -23,6 +23,14 @@ npm run build    # → dist/
 npm run preview
 ```
 
+Deploy to GitHub Pages (publishes `dist/` to the `gh-pages` branch):
+
+```bash
+npm run deploy
+```
+
+Live demo: **https://omarzbaba.github.io/automated-line-3d-map/**
+
 ---
 
 ## Controls
@@ -44,10 +52,18 @@ npm run preview
 
 ---
 
+## Track topology
+
+The line is **not** a single straight conveyor. It is a main transport **spine**
+that runs the full length in front, and the analyzer cells **branch off it at 90°**
+via perpendicular **spur tracks** — each spur has a junction/transfer node where it
+meets the spine and a carrier that shuttles samples in and out (matching the
+reference, where the DxI / AU / Cobas cells sit back from the spine). Pre-analytic
+modules (inlet, decapper, aliquoter, SMS, outlet, recapper) sit inline on the spine.
+
 ## The line (left → right)
 
-Same order as the reference render, with the transport track running the full
-length in front:
+Same order as the reference render:
 
 1. **Dynamic Inlet** — sample loading / entry
 2. **Centrifuges** — 4-unit spin bank

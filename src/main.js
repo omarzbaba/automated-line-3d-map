@@ -7,6 +7,7 @@ import { createInteraction } from './core/interaction.js';
 import { createHud } from './core/hud.js';
 import { buildInstruments } from './builders/instruments.js';
 import { buildTrack } from './builders/track.js';
+import { buildBranches } from './builders/branches.js';
 
 const canvas = document.getElementById('scene');
 const app = document.getElementById('app');
@@ -20,6 +21,9 @@ scene.add(instruments.group);
 
 const track = buildTrack();
 scene.add(track.group);
+
+const branches = buildBranches();
+scene.add(branches.group);
 
 // --- HUD + labels + interaction ---
 const hud = createHud(instruments.entries, selectStation);
@@ -166,6 +170,7 @@ function loop() {
   interaction.animate(dt);
   updateTour(dt);
   track.update(dt, flowOn);
+  branches.update(dt, flowOn);
   renderer.render(scene, cam.camera);
   labels.render(scene, cam.camera);
 }
