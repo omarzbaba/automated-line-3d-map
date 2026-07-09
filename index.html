@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Automated Line — 3D Map</title>
+    <link rel="stylesheet" href="/src/styles/global.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <!-- Loading veil -->
+      <div id="loader" class="loader">
+        <div class="loader-mark">
+          <span class="loader-dot"></span>
+          <span class="loader-dot"></span>
+          <span class="loader-dot"></span>
+        </div>
+        <p class="loader-text">Building the line…</p>
+      </div>
+
+      <!-- Top brand / title -->
+      <header class="topbar" aria-label="Title">
+        <div class="topbar-brand">
+          <span class="topbar-badge">LAB</span>
+          <div class="topbar-titles">
+            <h1>Automated Line</h1>
+            <p>Total Lab Automation · Interactive 3D Map</p>
+          </div>
+        </div>
+        <div class="topbar-legend" id="legend" aria-label="Domain legend"></div>
+      </header>
+
+      <!-- Hover / selection info card -->
+      <aside class="infocard" id="infocard" hidden aria-live="polite">
+        <div class="infocard-accent" id="infoAccent"></div>
+        <div class="infocard-body">
+          <p class="infocard-domain" id="infoDomain">Domain</p>
+          <h2 class="infocard-name" id="infoName">Instrument</h2>
+          <p class="infocard-desc" id="infoDesc"></p>
+          <ul class="infocard-meta" id="infoMeta"></ul>
+        </div>
+      </aside>
+
+      <!-- Control dock -->
+      <nav class="dock" aria-label="View controls">
+        <button class="dock-btn" id="btnOrbit" data-mode="orbit" title="Orbit / inspect (drag to rotate, right-drag to pan, scroll to zoom)">
+          <span class="dock-ico">◐</span><span class="dock-label">Orbit</span>
+        </button>
+        <button class="dock-btn" id="btnWalk" data-mode="walk" title="Walk through (W A S D · mouse to look · Esc to exit)">
+          <span class="dock-ico">⤢</span><span class="dock-label">Walk</span>
+        </button>
+        <span class="dock-sep"></span>
+        <button class="dock-btn" id="btnTour" title="Play a guided fly-through of the line">
+          <span class="dock-ico">▶</span><span class="dock-label">Tour</span>
+        </button>
+        <button class="dock-btn" id="btnReset" title="Reset the camera to the overview">
+          <span class="dock-ico">⟳</span><span class="dock-label">Reset</span>
+        </button>
+        <span class="dock-sep"></span>
+        <button class="dock-btn is-active" id="btnLabels" title="Toggle floating labels">
+          <span class="dock-ico">🏷</span><span class="dock-label">Labels</span>
+        </button>
+        <button class="dock-btn is-active" id="btnFlow" title="Toggle sample-carrier motion on the track">
+          <span class="dock-ico">⇄</span><span class="dock-label">Flow</span>
+        </button>
+      </nav>
+
+      <!-- Station jump list -->
+      <nav class="stationlist" id="stationlist" aria-label="Jump to station"></nav>
+
+      <!-- Walk-mode hint -->
+      <div class="walkhint" id="walkhint" hidden>
+        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move ·
+        <kbd>Q</kbd><kbd>E</kbd> down/up · mouse to look ·
+        <kbd>Shift</kbd> sprint · <kbd>Esc</kbd> exit
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
