@@ -74,14 +74,30 @@ export function createInteraction(camera, domElement, instrumentsRoot, entries, 
     setHovered(null);
   }
 
-  function onClick() {
+  // Distinguish a genuine click from a drag-to-rotate: record where the press
+  // started and only select if the pointer barely moved. Without this, dragging
+  // the camera while the cursor is over a machine fires a fly-to on release —
+  // which reads as glitchy navigation.
+  let downX = 0;
+  let downY = 0;
+  const DRAG_SLOP = 6; // px
+
+  function onDown(e) {
+    downX = e.clientX;
+    downY = e.clientY;
+  }
+
+  function onClick(e) {
     if (!enabled || !hovered) return;
+    const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+    if (moved > DRAG_SLOP) return; // it was a drag, not a click
     const entry = stationById.get(hovered);
     handlers.onSelect?.(entry.station);
   }
 
   domElement.addEventListener('pointermove', onMove);
   domElement.addEventListener('pointerleave', onLeave);
+  domElement.addEventListener('pointerdown', onDown);
   domElement.addEventListener('click', onClick);
 
   function update() {

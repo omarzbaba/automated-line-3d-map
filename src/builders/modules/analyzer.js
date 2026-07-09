@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, accentMaterial } from '../materials.js';
+import { materials } from '../materials.js';
 import {
   bodyBlock, box, facePanel, screen, statusStrip, accentStripe,
   vents, accessHood, casters, contactShadow,
@@ -33,10 +33,16 @@ function buildUnit(uw, ud, h, domain, hoods, m) {
     g.add(accessHood(uw - 1.0, ud - 1.4, 1.0, { y: h, z: -0.2 }));
     const rr = Math.min(uw, ud);
     const carousel = new THREE.Mesh(
-      new THREE.CylinderGeometry(rr * 0.28, rr * 0.3, 0.4, 24), accentMaterial(domain),
+      new THREE.CylinderGeometry(rr * 0.28, rr * 0.3, 0.4, 24), m.bodyMid,
     );
     carousel.position.set(0, h + 0.35, -0.2);
     g.add(carousel);
+    // Dark inner hub so the neutral carousel still reads as a mechanism.
+    const hub = new THREE.Mesh(
+      new THREE.CylinderGeometry(rr * 0.12, rr * 0.12, 0.44, 16), m.darkTrim,
+    );
+    hub.position.set(0, h + 0.37, -0.2);
+    g.add(hub);
     const bottleGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
     const ring = rr * 0.22;
     for (let b = 0; b < 8; b++) {

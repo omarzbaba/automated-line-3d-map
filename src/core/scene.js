@@ -60,7 +60,9 @@ export function createScene(canvas) {
   const groundD = 90;
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(groundW, groundD),
-    new THREE.MeshStandardMaterial({ color: 0xeef2f7, roughness: 0.98, metalness: 0 }),
+    new THREE.MeshStandardMaterial({
+      color: 0xeef2f7, roughness: 0.98, metalness: 0, side: THREE.DoubleSide,
+    }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(centerX, 0, LINE.z - 4);

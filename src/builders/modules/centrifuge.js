@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, accentMaterial } from '../materials.js';
+import { materials } from '../materials.js';
 import {
   bodyBlock, box, facePanel, statusStrip, accentStripe, casters, contactShadow,
 } from '../primitives.js';
@@ -45,7 +45,7 @@ export function buildCentrifuges(station) {
     // Central hub button on the lid.
     const hub = new THREE.Mesh(
       new THREE.CylinderGeometry(lidR * 0.28, lidR * 0.28, 0.14, 16),
-      accentMaterial(domain),
+      m.metalDark,
     );
     hub.position.set(cx, h + 0.67, -0.2);
     g.add(hub);

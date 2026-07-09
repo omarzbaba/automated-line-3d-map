@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, accentMaterial } from '../materials.js';
+import { materials } from '../materials.js';
 import {
   bodyBlock, box, facePanel, screen, statusStrip, accentStripe,
   casters, contactShadow,
@@ -38,9 +38,9 @@ export function buildRecapper(station) {
   head.castShadow = true;
   g.add(head);
 
-  // Cap hopper (angled funnel) feeding the head, tinted by domain accent.
+  // Cap hopper (angled funnel) feeding the head.
   const hopper = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.7, 0.25, 1.0, 16), accentMaterial(domain),
+    new THREE.CylinderGeometry(0.7, 0.25, 1.0, 16), m.bodyLight,
   );
   hopper.position.set(w * 0.28, h + 1.5, -d * 0.24);
   hopper.castShadow = true;

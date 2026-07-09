@@ -19,15 +19,20 @@ export function createCamera(renderer) {
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
+  controls.dampingFactor = 0.075;
   controls.target.copy(OVERVIEW.target);
-  controls.minDistance = 8;
-  controls.maxDistance = 520;
-  controls.maxPolarAngle = Math.PI * 0.495; // stay above the floor
+  controls.minDistance = 6;
+  controls.maxDistance = 620;
+  // Full azimuth (360°) is unrestricted; allow a very wide vertical arc so the
+  // line can be viewed from almost overhead down to near ground level.
+  controls.minPolarAngle = 0.04 * Math.PI;
+  controls.maxPolarAngle = 0.92 * Math.PI;
   controls.enablePan = true;
-  controls.panSpeed = 0.9;
-  controls.rotateSpeed = 0.85;
-  controls.zoomSpeed = 0.95;
+  controls.screenSpacePanning = true;
+  controls.panSpeed = 1.0;
+  controls.rotateSpeed = 0.9;
+  controls.zoomSpeed = 1.0;
+  controls.zoomToCursor = true;
 
   // --- Tween state for focus / reset ---
   const anim = {
@@ -35,6 +40,15 @@ export function createCamera(renderer) {
     fromPos: new THREE.Vector3(), toPos: new THREE.Vector3(),
     fromTarget: new THREE.Vector3(), toTarget: new THREE.Vector3(),
   };
+
+  // Any manual interaction (drag / wheel / touch) instantly cancels a running
+  // fly-to so the camera never fights the user — the #1 source of "glitchiness".
+  function cancelTween() {
+    anim.active = false;
+  }
+  controls.addEventListener('start', cancelTween);
+  renderer.domElement.addEventListener('wheel', cancelTween, { passive: true });
+  renderer.domElement.addEventListener('pointerdown', cancelTween);
 
   function tweenTo(pos, target, dur = 1.1) {
     anim.fromPos.copy(camera.position);

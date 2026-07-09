@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { materials, accentMaterial } from '../materials.js';
+import { materials } from '../materials.js';
 import {
   bodyBlock, box, statusStrip, accentStripe, casters, contactShadow,
 } from '../primitives.js';
@@ -73,7 +73,7 @@ export function buildStockyards(station) {
   bridge.castShadow = true;
   g.add(bridge);
   // Robot picker head hanging from the bridge.
-  const picker = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.5), accentMaterial(domain));
+  const picker = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.5), m.metalDark);
   picker.position.set(w * 0.1, h + 0.1, 0);
   picker.castShadow = true;
   g.add(picker);
