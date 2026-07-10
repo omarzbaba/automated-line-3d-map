@@ -6,49 +6,77 @@ import {
 } from '../primitives.js';
 
 // A large clinical analyzer bank — the workhorse for Coagulation, Hematology,
-// Immunoassay and Chemistry. Each sub-analyzer unit is built independently so
-// units can be laid out either in a row (parallel to the spine) or as an
-// L-shaped "wing" where later units turn 90° and jut perpendicular from the
-// line (used for Chemistry: AU 1 at the head, AU 2 + Cobas jutting out).
+// Immunoassay and Chemistry. Each unit has the real-analyzer silhouette: a low
+// front deck under a glass hood (reagent/sample carousel) with a taller housing
+// tower at the rear and a sloped shoulder between them. Units lay out either in
+// a row (parallel to the spine) or as an L-shaped wing that juts 90°.
 
-// One self-contained analyzer unit, centered at local origin, front facing +Z.
 function buildUnit(uw, ud, h, domain, hoods, m) {
   const g = new THREE.Group();
   const frontZ = ud / 2;
 
-  g.add(bodyBlock(uw - 0.12, h, ud - 0.2, 'bodyWhite', { z: 0, r: 0.22 }));
-  g.add(box(uw - 0.5, h * 0.28, 0.18, 'bodyLight', { y: h * 0.74, z: frontZ - 0.05 }));
-  g.add(facePanel(uw - 1.1, h * 0.34, { y: h * 0.34, z: frontZ - 0.02, mat: 'panel' }));
-  g.add(accentStripe(uw - 0.3, domain, { y: 0.42, z: frontZ + 0.02 }));
+  // Lower body.
+  g.add(bodyBlock(uw - 0.12, h, ud - 0.2, 'bodyWhite', { z: 0, r: 0.2 }));
 
-  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.9, 10), m.metalDark);
-  arm.position.set(uw * 0.28, h + 0.35, frontZ - 0.3);
+  // Rear housing tower — the taller back section.
+  const towerH = h * 0.52;
+  g.add(box(uw - 0.5, towerH, ud * 0.4, 'topCover', {
+    y: h + towerH / 2, z: -ud * 0.26, r: 0.14,
+  }));
+
+  // Sloped shoulder linking the tower down to the front deck.
+  const shoulder = box(uw - 0.6, 0.16, ud * 0.5, 'bodyLight', {
+    y: h + towerH * 0.42, z: ud * 0.02, r: 0.05,
+  });
+  shoulder.rotation.x = -0.52;
+  g.add(shoulder);
+
+  // Front fascia band + recessed control panel.
+  g.add(box(uw - 0.5, h * 0.26, 0.16, 'bodyLight', { y: h * 0.78, z: frontZ - 0.05 }));
+  g.add(facePanel(uw - 1.1, h * 0.4, { y: h * 0.34, z: frontZ - 0.02, mat: 'panel' }));
+
+  // Thin domain accent stripe along the base front.
+  g.add(accentStripe(uw - 0.4, domain, { y: 0.42, z: frontZ + 0.02 }));
+
+  // Operator touchscreen on an arm.
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.85, 10), m.metalDark);
+  arm.position.set(uw * 0.3, h + 0.3, frontZ - 0.25);
   arm.castShadow = true;
   g.add(arm);
-  g.add(screen(1.5, 1.0, { x: uw * 0.28, y: h + 0.9, z: frontZ - 0.1, tilt: -0.5 }));
-  g.add(statusStrip(5, domain, { x: -uw * 0.22, y: h * 0.62, z: frontZ + 0.01 }));
+  g.add(screen(1.4, 0.95, { x: uw * 0.3, y: h + 0.82, z: frontZ - 0.05, tilt: -0.5 }));
+
+  // Status lights + side vents.
+  g.add(statusStrip(5, domain, { x: -uw * 0.24, y: h * 0.62, z: frontZ + 0.01 }));
   g.add(vents(0.5, h * 0.5, { x: -uw / 2 - 0.02, y: h * 0.5, z: 0, rows: 6 }));
 
+  // Recessed door handles on the front.
+  for (const hx of [-uw * 0.24, uw * 0.02]) {
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.08, 0.12), m.metalDark);
+    handle.position.set(hx, h * 0.36, frontZ + 0.04);
+    g.add(handle);
+  }
+
+  // Glass access hood on the front deck over a reagent carousel.
   if (hoods) {
-    g.add(accessHood(uw - 1.0, ud - 1.4, 1.0, { y: h, z: -0.2 }));
+    const deckZ = frontZ * 0.32;
+    g.add(accessHood(uw - 1.2, ud * 0.42, 0.85, { y: h, z: deckZ }));
     const rr = Math.min(uw, ud);
     const carousel = new THREE.Mesh(
-      new THREE.CylinderGeometry(rr * 0.28, rr * 0.3, 0.4, 24), m.bodyMid,
+      new THREE.CylinderGeometry(rr * 0.22, rr * 0.24, 0.4, 24), m.bodyMid,
     );
-    carousel.position.set(0, h + 0.35, -0.2);
+    carousel.position.set(0, h + 0.3, deckZ);
     g.add(carousel);
-    // Dark inner hub so the neutral carousel still reads as a mechanism.
     const hub = new THREE.Mesh(
-      new THREE.CylinderGeometry(rr * 0.12, rr * 0.12, 0.44, 16), m.darkTrim,
+      new THREE.CylinderGeometry(rr * 0.1, rr * 0.1, 0.44, 16), m.darkTrim,
     );
-    hub.position.set(0, h + 0.37, -0.2);
+    hub.position.set(0, h + 0.32, deckZ);
     g.add(hub);
-    const bottleGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
-    const ring = rr * 0.22;
+    const bottleGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.36, 8);
+    const ring = rr * 0.17;
     for (let b = 0; b < 8; b++) {
       const a = (b / 8) * Math.PI * 2;
       const bot = new THREE.Mesh(bottleGeo, m.glass);
-      bot.position.set(Math.cos(a) * ring, h + 0.5, -0.2 + Math.sin(a) * ring);
+      bot.position.set(Math.cos(a) * ring, h + 0.42, deckZ + Math.sin(a) * ring);
       g.add(bot);
     }
   }
@@ -72,11 +100,9 @@ function wingPlacements(w, d, units) {
   const ud = 7.4;
   const gap = 0.7;
   const out = [];
-  // Head unit at the front-right, facing the spine.
   const hx = w / 2 - uw / 2;
   const hz = d / 2 - ud / 2;
   out.push({ uw, ud, x: hx, z: hz, rot: 0, lx: hx, lz: d / 2 + 0.2 });
-  // Perpendicular arm on the left, each unit rotated to face +X.
   const armX = -w / 2 + ud / 2 + 0.3;
   for (let u = 1; u < units; u++) {
     const z = (d / 2 - uw / 2) - (u - 1) * (uw + gap);
@@ -105,7 +131,6 @@ export function buildAnalyzer(station) {
   });
 
   g.add(casters(w, d, { inset: 0.7 }));
-  // Local {x, z} anchors so model sub-labels sit above each unit.
   g.userData.unitCenters = placements.map((p) => ({ x: p.lx, z: p.lz }));
   return g;
 }

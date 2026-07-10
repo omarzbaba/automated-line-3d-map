@@ -29,16 +29,17 @@ export function domainHex(key) {
 
 // Body / structural palette (shared, reused instances for performance).
 const PALETTE = {
-  bodyWhite: 0xf3f6fa,
-  bodyLight: 0xe7edf4,
-  bodyMid: 0xd4dce6,
-  panelGrey: 0xc3cddb,
+  bodyWhite: 0xf7f9fc,
+  bodyLight: 0xeaeff5,
+  bodyMid: 0xd7dfe9,
+  topCover: 0xf1f4f8,
+  panelGrey: 0xb9c4d3,
   darkTrim: 0x2b3444,
   screen: 0x121a29,
   screenGlow: 0x2bd4c8,
-  metal: 0xaab4c2,
+  metal: 0xaeb8c6,
   metalDark: 0x8a94a3,
-  glass: 0xbfe0ea,
+  glass: 0xc7e2ea,
   rubber: 0x2f3640,
   floor: 0xe9eef4,
   belt: 0x3f8f5f,
@@ -60,9 +61,10 @@ let cache = null;
 export function materials() {
   if (cache) return cache;
   cache = {
-    bodyWhite: std(PALETTE.bodyWhite, { roughness: 0.55 }),
-    bodyLight: std(PALETTE.bodyLight, { roughness: 0.6 }),
-    bodyMid: std(PALETTE.bodyMid, { roughness: 0.62 }),
+    bodyWhite: std(PALETTE.bodyWhite, { roughness: 0.47, metalness: 0.04 }),
+    bodyLight: std(PALETTE.bodyLight, { roughness: 0.53 }),
+    bodyMid: std(PALETTE.bodyMid, { roughness: 0.58 }),
+    topCover: std(PALETTE.topCover, { roughness: 0.42, metalness: 0.05 }),
     panel: std(PALETTE.panelGrey, { roughness: 0.5, metalness: 0.15 }),
     darkTrim: std(PALETTE.darkTrim, { roughness: 0.5, metalness: 0.2 }),
     metal: std(PALETTE.metal, { roughness: 0.35, metalness: 0.75 }),

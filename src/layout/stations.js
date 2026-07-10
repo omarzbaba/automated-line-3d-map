@@ -39,7 +39,7 @@ const RAW = [
   },
   {
     id: 'centrifuges', name: 'Centrifuges', short: 'Centrifuges', domain: 'centrifuge',
-    type: 'centrifuge', x: 29, w: 24, d: 7, h: 3.3, mount: 'spur', spur: 5.5, units: 4,
+    type: 'centrifuge', x: 29, w: 14, d: 12, h: 3.3, mount: 'spur', spur: 5, units: 4,
     desc: 'Bank of automated centrifuges spinning samples to separate serum and plasma before processing.',
     meta: ['4 units', 'Serum / plasma', 'Balanced load'],
     stats: [['Throughput', '~600 tubes/hr'], ['Rotors', '4 × auto-balance'], ['Spin', '~3,000 × g']],

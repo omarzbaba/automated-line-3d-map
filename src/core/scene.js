@@ -16,44 +16,48 @@ export function createScene(canvas) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.12;
 
   const scene = new THREE.Scene();
 
   const centerX = lineCenterX();
   const len = lineLength();
 
-  // --- Lighting ---
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xb9c4d2, 0.85);
+  // --- Lighting: soft studio setup for a clean product-render look ---
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xc4cedb, 1.0);
   scene.add(hemi);
 
-  const key = new THREE.DirectionalLight(0xffffff, 1.55);
-  key.position.set(centerX + 40, 70, 55);
-  key.target.position.set(centerX, 2, 0);
+  // Key light — high and to the front-right, soft shadows.
+  const key = new THREE.DirectionalLight(0xfff6ec, 1.35);
+  key.position.set(centerX + 55, 95, 70);
+  key.target.position.set(centerX, 2, -3);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
-  key.shadow.bias = -0.0004;
-  key.shadow.normalBias = 0.03;
-  const half = len * 0.6;
+  key.shadow.mapSize.set(4096, 4096);
+  key.shadow.bias = -0.00035;
+  key.shadow.normalBias = 0.035;
+  key.shadow.radius = 5;
+  const half = len * 0.62;
   const sc = key.shadow.camera;
   sc.left = -half;
   sc.right = half;
-  sc.top = 60;
-  sc.bottom = -30;
+  sc.top = 70;
+  sc.bottom = -45;
   sc.near = 1;
-  sc.far = 260;
+  sc.far = 320;
   scene.add(key);
   scene.add(key.target);
 
-  const fill = new THREE.DirectionalLight(0xdfe8f5, 0.5);
-  fill.position.set(centerX - 50, 35, -40);
+  // Cool fill from the opposite side to open up shadows.
+  const fill = new THREE.DirectionalLight(0xe3ecf8, 0.6);
+  fill.position.set(centerX - 70, 45, -55);
   scene.add(fill);
 
-  const rim = new THREE.DirectionalLight(0xffffff, 0.35);
-  rim.position.set(centerX, 30, -60);
+  // Gentle rim/back light for silhouette separation.
+  const rim = new THREE.DirectionalLight(0xffffff, 0.4);
+  rim.position.set(centerX, 40, -80);
   scene.add(rim);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.32));
 
   // --- Ground ---
   const groundW = len + 80;
