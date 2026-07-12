@@ -18,15 +18,18 @@
 //   stats → throughput figures shown on the info card
 // ---------------------------------------------------------------------------
 
+import { spineZ, SPINE } from './spine.js';
+
 const SPINE_GAP = 1.9; // belt centerline → inline module face
 const DESK_GAP = 2.2; // belt centerline → command desk (near side)
 const SPUR_LEN = 7.5; // default length of a perpendicular spur branch
 
-// Resolve footprint-center Z from the mount type + spur length.
-function placeZ(depth, mount, spur) {
-  if (mount === 'desk') return DESK_GAP + depth / 2;
-  if (mount === 'spur') return -(SPINE_GAP + (spur || SPUR_LEN) + depth / 2);
-  return -(SPINE_GAP + depth / 2);
+// Resolve footprint-center Z from the spine curve at X + the mount offset.
+function placeZ(x, depth, mount, spur) {
+  const base = spineZ(x);
+  if (mount === 'desk') return base + DESK_GAP + depth / 2;
+  if (mount === 'spur') return base - (SPINE_GAP + (spur || SPUR_LEN) + depth / 2);
+  return base - (SPINE_GAP + depth / 2);
 }
 
 const RAW = [
@@ -151,13 +154,13 @@ const RAW = [
 
 export const STATIONS = RAW.map((s) => ({
   ...s,
-  z: placeZ(s.d, s.mount, s.spur),
+  z: placeZ(s.x, s.d, s.mount, s.spur),
 }));
 
-// Track spans a little beyond the first and last station.
+// Track spans the whole spine domain.
 export const LINE = {
-  startX: -6,
-  endX: STATIONS[STATIONS.length - 1].x + 12,
+  startX: SPINE.startX,
+  endX: SPINE.endX,
   z: 0,
   beltHalf: 1.6,
 };

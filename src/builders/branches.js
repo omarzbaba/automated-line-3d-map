@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { materials, accentMaterial } from './materials.js';
-import { SPUR_STATIONS, LINE } from '../layout/stations.js';
+import { SPUR_STATIONS } from '../layout/stations.js';
+import { spineZ } from '../layout/spine.js';
 
 // ---------------------------------------------------------------------------
 // Perpendicular 90° spur branches. Each analyzer cell that is mounted off the
@@ -24,7 +25,7 @@ export function buildBranches() {
 
   SPUR_STATIONS.forEach((s, idx) => {
     const x = s.x;
-    const zSpine = -(LINE.beltHalf + 0.2); // where the spur meets the spine
+    const zSpine = spineZ(x) - 2.2; // where the spur meets the (curving) spine's far edge
     const zCell = s.z + s.d / 2 + 0.1; // the cell's front face
     const len = Math.abs(zCell - zSpine);
     const zMid = (zSpine + zCell) / 2;
