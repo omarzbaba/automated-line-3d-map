@@ -42,7 +42,7 @@ const RAW = [
   },
   {
     id: 'centrifuges', name: 'Centrifuges', short: 'Centrifuges', domain: 'centrifuge',
-    type: 'centrifuge', x: 29, w: 14, d: 12, h: 3.3, mount: 'spur', spur: 5, units: 4,
+    type: 'centrifuge', x: 29, w: 14, d: 12, h: 3.3, mount: 'spur', spur: 3.5, units: 4,
     desc: 'Bank of automated centrifuges spinning samples to separate serum and plasma before processing.',
     meta: ['4 units', 'Serum / plasma', 'Balanced load'],
     stats: [['Throughput', '~600 tubes/hr'], ['Rotors', '4 × auto-balance'], ['Spin', '~3,000 × g']],
@@ -63,7 +63,7 @@ const RAW = [
   },
   {
     id: 'coagulation', name: 'Coagulation', short: 'Coagulation', domain: 'coagulation',
-    type: 'analyzer', x: 84, w: 20, d: 8, h: 3.6, mount: 'spur', spur: 7, units: 2, hoods: true,
+    type: 'analyzer', x: 84, w: 20, d: 8, h: 3.6, mount: 'spur', spur: 4, units: 2, hoods: true,
     models: ['STAGO', 'STAGO'],
     desc: 'Coagulation analyzers (STAGO) measuring clotting parameters such as PT, aPTT and fibrinogen. Fed from the spine by a 90° spur.',
     meta: ['STAGO ×2', 'PT / aPTT', 'Hemostasis'],
@@ -78,7 +78,7 @@ const RAW = [
   },
   {
     id: 'hematology', name: 'Hematology', short: 'Hematology', domain: 'hematology',
-    type: 'analyzer', x: 116, w: 22, d: 8, h: 3.7, mount: 'spur', spur: 8, units: 2, hoods: true,
+    type: 'analyzer', x: 116, w: 22, d: 8, h: 3.7, mount: 'spur', spur: 4.5, units: 2, hoods: true,
     models: ['DxH 3s', 'DxH 2s'],
     desc: 'Hematology analyzers (DxH 3s / DxH 2s) producing complete blood counts and differentials. Reached by a 90° spur off the spine.',
     meta: ['DxH 3s', 'DxH 2s', 'CBC / Diff'],
@@ -93,7 +93,7 @@ const RAW = [
   },
   {
     id: 'immunoassay', name: 'Immunoassay', short: 'Immunoassay', domain: 'immunoassay',
-    type: 'analyzer', x: 150, w: 27, d: 8.5, h: 3.8, mount: 'spur', spur: 8.5, units: 3, hoods: true,
+    type: 'analyzer', x: 150, w: 27, d: 8.5, h: 3.8, mount: 'spur', spur: 4.5, units: 3, hoods: true,
     models: ['DxI 1 & 2', 'DxI 3'],
     desc: 'Immunoassay analyzers (DxI) running hormone, cardiac, tumor-marker and infectious-disease panels. Branches off the spine at 90°.',
     meta: ['DxI 1 & 2', 'DxI 3', 'Chemiluminescence'],
@@ -145,7 +145,7 @@ const RAW = [
   },
   {
     id: 'stockyards', name: 'Stockyards', short: 'Stockyards', domain: 'outlet',
-    type: 'stockyards', x: 265, w: 16, d: 8, h: 4.3, mount: 'spur', spur: 6, units: 1,
+    type: 'stockyards', x: 265, w: 16, d: 8, h: 4.3, mount: 'spur', spur: 4, units: 1,
     desc: 'Refrigerated storage & retrieval — a robotic archive on a 90° spur that stores tubes and recalls them for add-on tests.',
     meta: ['Refrigerated', 'Robotic archive', 'Retrieval'],
     stats: [['Capacity', '~15,000 tubes'], ['Store', '2–8 °C refrigerated'], ['Recall', 'Robotic retrieval']],
