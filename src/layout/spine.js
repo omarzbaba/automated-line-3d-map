@@ -8,7 +8,7 @@
 // module returns the centerline Z (and heading) for any X.
 // ---------------------------------------------------------------------------
 
-export const SPINE = { startX: -4, endX: 230 };
+export const SPINE = { startX: -4, endX: 237 };
 
 // Centerline Z for a given X along the line. The reference line is a single
 // straight run, so the centerline is flat; the helpers below still resolve
