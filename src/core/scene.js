@@ -68,17 +68,11 @@ export function createScene(canvas) {
       color: 0xeef2f7, roughness: 0.98, metalness: 0, side: THREE.DoubleSide,
     }),
   );
+  // Sits below the raised deck so the deck reads as a platform above it.
   ground.rotation.x = -Math.PI / 2;
-  ground.position.set(centerX, 0, LINE.z - 4);
+  ground.position.set(centerX, -0.55, LINE.z - 4);
   ground.receiveShadow = true;
   scene.add(ground);
-
-  // Subtle floor grid for scale reference.
-  const grid = new THREE.GridHelper(groundW, Math.round(groundW / 6), 0xc2ccda, 0xdbe2ec);
-  grid.position.set(centerX, 0.02, LINE.z - 4);
-  grid.material.transparent = true;
-  grid.material.opacity = 0.5;
-  scene.add(grid);
 
   return { renderer, scene, lights: { key, fill, hemi, rim } };
 }

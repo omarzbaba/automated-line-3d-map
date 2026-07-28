@@ -8,6 +8,7 @@ import { createHud } from './core/hud.js';
 import { buildInstruments } from './builders/instruments.js';
 import { buildTrack } from './builders/track.js';
 import { buildBranches } from './builders/branches.js';
+import { buildDeck } from './builders/deck.js';
 
 const canvas = document.getElementById('scene');
 const app = document.getElementById('app');
@@ -15,6 +16,9 @@ const app = document.getElementById('app');
 // --- Scene graph ---
 const { renderer, scene } = createScene(canvas);
 const cam = createCamera(renderer);
+
+const deck = buildDeck();
+scene.add(deck.group);
 
 const instruments = buildInstruments();
 scene.add(instruments.group);
