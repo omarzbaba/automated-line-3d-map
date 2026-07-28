@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
 // The transport spine's centerline. In the reference the line is not perfectly
-// straight — it bows gently and the far third drifts back. Everything (the
-// two-lane track, the docking spurs and the station Z positions) is anchored to
-// this curve so the whole layout reads as one connected, subtly curving line.
+// Everything (the four-sublane track, the docking spurs and the station Z
+// positions) is anchored to this centerline, so the layout reads as one
+// connected line and a bend introduced here propagates to the whole build.
 //
 // X is the primary axis (Dynamic Inlet at low X → Stockyards at high X); this
 // module returns the centerline Z (and heading) for any X.
