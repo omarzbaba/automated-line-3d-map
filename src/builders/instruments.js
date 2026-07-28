@@ -36,6 +36,7 @@ export function buildInstruments() {
     if (!build) continue;
     const g = build(station);
     g.position.set(station.x, 0, station.z);
+    if (station.rot) g.rotation.y = station.rot;
     g.name = station.id;
 
     // Tag every descendant so raycasting can resolve the owning station.

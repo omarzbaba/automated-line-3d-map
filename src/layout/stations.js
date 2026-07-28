@@ -21,13 +21,17 @@
 import { spineZ, SPINE } from './spine.js';
 
 const SPINE_GAP = 1.9; // belt centerline → inline module face
-const DESK_GAP = 2.2; // belt centerline → command desk (near side)
 const SPUR_LEN = 7.5; // default length of a perpendicular spur branch
+
+// Command Central desks are standalone operator workstations — they are NOT
+// part of the automation line and connect to nothing. They stand well clear of
+// the track in open floor on the operator side, as in the reference.
+const DESK_OFFSET = 15;
 
 // Resolve footprint-center Z from the spine curve at X + the mount offset.
 function placeZ(x, depth, mount, spur) {
   const base = spineZ(x);
-  if (mount === 'desk') return base + DESK_GAP + depth / 2;
+  if (mount === 'desk') return base + DESK_OFFSET + depth / 2;
   if (mount === 'spur') return base - (SPINE_GAP + (spur || SPUR_LEN) + depth / 2);
   return base - (SPINE_GAP + depth / 2);
 }
@@ -71,8 +75,8 @@ const RAW = [
   },
   {
     id: 'cmdHema', name: 'Command Central · Hematology', short: 'Cmd · Hematology', domain: 'command',
-    type: 'command', x: 100, w: 11, d: 5, h: 2.6, mount: 'desk',
-    desc: 'Operator control station overseeing the hematology and coagulation cells of the line.',
+    type: 'command', x: 100, w: 11, d: 5, h: 2.6, mount: 'desk', rot: Math.PI,
+    desc: 'Standalone operator control station overseeing the hematology and coagulation cells. Stands off-line in open floor — not connected to the transport track.',
     meta: ['Control desk', 'Monitoring', 'Operator'],
     stats: [['Oversees', 'Coag + Hematology'], ['Consoles', '3 displays']],
   },
@@ -117,8 +121,8 @@ const RAW = [
   },
   {
     id: 'cmdChem', name: 'Command Central · Chemistry', short: 'Cmd · Chemistry', domain: 'command',
-    type: 'command', x: 209, w: 11, d: 5, h: 2.6, mount: 'desk',
-    desc: 'Operator control station overseeing the chemistry and immunoassay cells of the line.',
+    type: 'command', x: 209, w: 11, d: 5, h: 2.6, mount: 'desk', rot: Math.PI,
+    desc: 'Standalone operator control station overseeing the chemistry and immunoassay cells. Stands off-line in open floor — not connected to the transport track.',
     meta: ['Control desk', 'Monitoring', 'Operator'],
     stats: [['Oversees', 'Chemistry + Immuno'], ['Consoles', '3 displays']],
   },
