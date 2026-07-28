@@ -12,11 +12,22 @@ import { spineZ, spineHeading, spineNormal, SPINE } from '../layout/spine.js';
 
 const TUBE_CAP_COLORS = [0xe0455f, 0x2f6df6, 0x8b5cf6, 0xe8933a, 0x17b0a4, 0x9aa4b2];
 
-const PLATFORM_W = 4.6;
-const LANE_W = 1.35;
-const LANE_OFF = 0.82; // lane center offset from the spine centerline
+const PLATFORM_W = 3.9;
+// Each direction lane is split into two narrow sublanes, giving four running
+// belts across the track: [outer, inner | inner, outer].
+const SUBLANE_W = 0.6;
+const LANE_OFF = 0.78; // lane centerline offset from the spine centerline
+const SUBLANE_OFF = 0.36; // sublane offset from its own lane centerline
 const PLATFORM_Y = 0.35;
 const BELT_Y = 0.64;
+
+// Signed offsets of the four sublanes; sign of the lane sets travel direction.
+const SUBLANES = [
+  { off: LANE_OFF + SUBLANE_OFF, dir: 1 },
+  { off: LANE_OFF - SUBLANE_OFF, dir: 1 },
+  { off: -(LANE_OFF - SUBLANE_OFF), dir: -1 },
+  { off: -(LANE_OFF + SUBLANE_OFF), dir: -1 },
+];
 
 export function buildTrack() {
   const m = materials();
@@ -50,19 +61,24 @@ export function buildTrack() {
   // Plinth / platform.
   instancedRun(new THREE.BoxGeometry(segLen, 0.5, PLATFORM_W), m.bodyLight, PLATFORM_Y, 0, { shadow: true });
 
-  // Two green belt lanes.
-  instancedRun(new THREE.BoxGeometry(segLen, 0.12, LANE_W), m.belt, BELT_Y, LANE_OFF);
-  instancedRun(new THREE.BoxGeometry(segLen, 0.12, LANE_W), m.belt, BELT_Y, -LANE_OFF);
+  // Four narrow green belts (two sublanes per direction lane).
+  for (const s of SUBLANES) {
+    instancedRun(new THREE.BoxGeometry(segLen, 0.12, SUBLANE_W), m.belt, BELT_Y, s.off);
+  }
 
-  // Center divider rail + outer rails.
-  instancedRun(new THREE.BoxGeometry(segLen, 0.2, 0.16), m.metal, BELT_Y + 0.06, 0, { shadow: true });
-  instancedRun(new THREE.BoxGeometry(segLen, 0.22, 0.12), m.metal, BELT_Y + 0.08, PLATFORM_W / 2 - 0.12, { shadow: true });
-  instancedRun(new THREE.BoxGeometry(segLen, 0.22, 0.12), m.metal, BELT_Y + 0.08, -(PLATFORM_W / 2 - 0.12), { shadow: true });
+  // Center divider, a thin rail between the sublanes of each lane, outer rails.
+  instancedRun(new THREE.BoxGeometry(segLen, 0.2, 0.14), m.metal, BELT_Y + 0.06, 0, { shadow: true });
+  for (const off of [LANE_OFF, -LANE_OFF]) {
+    instancedRun(new THREE.BoxGeometry(segLen, 0.16, 0.08), m.metalDark, BELT_Y + 0.04, off);
+  }
+  for (const off of [PLATFORM_W / 2 - 0.12, -(PLATFORM_W / 2 - 0.12)]) {
+    instancedRun(new THREE.BoxGeometry(segLen, 0.22, 0.12), m.metal, BELT_Y + 0.08, off, { shadow: true });
+  }
 
-  // Chevron direction dashes on each lane.
-  const chevGeo = new THREE.BoxGeometry(0.45, 0.13, LANE_W * 0.72);
+  // Chevron direction dashes on each sublane.
+  const chevGeo = new THREE.BoxGeometry(0.4, 0.13, SUBLANE_W * 0.7);
   const chevN = Math.floor(length / 2.4);
-  for (const laneOff of [LANE_OFF, -LANE_OFF]) {
+  for (const laneOff of SUBLANES.map((s) => s.off)) {
     const chev = new THREE.InstancedMesh(chevGeo, m.beltDark, chevN);
     for (let i = 0; i < chevN; i++) {
       const x = SPINE.startX + 1.2 + i * 2.4;
@@ -98,28 +114,29 @@ export function buildTrack() {
   // --- Sample carriers (pucks + capped tubes) on both lanes ---
   const carriers = [];
   const carrierCount = Math.max(26, Math.floor(length / 6));
-  const puckGeo = new THREE.CylinderGeometry(0.34, 0.4, 0.3, 16);
-  const tubeGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.9, 12);
-  const capGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.22, 12);
+  // Sized to sit within a single narrow sublane.
+  const puckGeo = new THREE.CylinderGeometry(0.23, 0.27, 0.26, 16);
+  const tubeGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.78, 12);
+  const capGeo = new THREE.CylinderGeometry(0.115, 0.115, 0.18, 12);
 
   for (let i = 0; i < carrierCount; i++) {
     const c = new THREE.Group();
     const puck = new THREE.Mesh(puckGeo, m.darkTrim);
-    puck.position.y = 0.15;
+    puck.position.y = 0.13;
     puck.castShadow = true;
     const tube = new THREE.Mesh(tubeGeo, m.glass);
-    tube.position.y = 0.75;
+    tube.position.y = 0.65;
     const cap = new THREE.Mesh(
       capGeo,
       new THREE.MeshStandardMaterial({ color: TUBE_CAP_COLORS[i % TUBE_CAP_COLORS.length], roughness: 0.5 }),
     );
-    cap.position.y = 1.28;
+    cap.position.y = 1.11;
     cap.castShadow = true;
     c.add(puck, tube, cap);
 
-    const laneSign = i % 2 === 0 ? 1 : -1; // near lane +X, far lane -X
-    c.userData.laneSign = laneSign;
-    c.userData.dir = laneSign; // outbound on near lane, return on far lane
+    const sub = SUBLANES[i % SUBLANES.length];
+    c.userData.laneOff = sub.off;
+    c.userData.dir = sub.dir; // outbound on one lane's sublanes, return on the other
     c.userData.x = SPINE.startX + (i / carrierCount) * length;
     c.userData.speed = 5.5 + (i % 3) * 0.9;
     placeCarrier(c);
@@ -130,7 +147,7 @@ export function buildTrack() {
   function placeCarrier(c) {
     const x = c.userData.x;
     const nrm = spineNormal(x);
-    const off = c.userData.laneSign * LANE_OFF;
+    const off = c.userData.laneOff;
     c.position.set(x + nrm.nx * off, 0.7, spineZ(x) + nrm.nz * off);
   }
 
