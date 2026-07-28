@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------
-// The transport spine's centerline. In the reference the line is not perfectly
-// Everything (the four-sublane track, the docking spurs and the station Z
+// The transport spine's centerline, which the reference renders as a single
+// straight run. Everything (the four-sublane track, the docking spurs and station Z
 // positions) is anchored to this centerline, so the layout reads as one
 // connected line and a bend introduced here propagates to the whole build.
 //
