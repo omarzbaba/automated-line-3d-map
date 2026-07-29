@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Automated Line — Plan Editor</title>
+<style>
+  :root {
+    --ink: #0f1b2d; --ink-soft: #46586f; --ink-faint: #8794a7;
+    --panel: #ffffff; --line: #dfe5ee; --bg: #eef2f7;
+    --accent: #2f6df6; --danger: #e0455f;
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: var(--font); color: var(--ink); background: var(--bg); }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 15px; font-weight: 700; }
+  header p { font-size: 12px; color: var(--ink-soft); }
+  .spacer { flex: 1; }
+
+  button {
+    font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: #f2f5f9; border: 1px solid var(--line); padding: 7px 12px;
+    border-radius: 9px; cursor: pointer; transition: background .13s, border-color .13s;
+  }
+  button:hover { background: #e6ecf4; }
+  button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  button.primary:hover { background: #22314a; }
+  button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.danger { color: var(--danger); }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  #stage { flex: 1; overflow: auto; background: var(--bg); position: relative; }
+  svg { display: block; }
+
+  aside {
+    width: 310px; flex: 0 0 310px; background: var(--panel); border-left: 1px solid var(--line);
+    overflow-y: auto; padding: 16px;
+  }
+  aside h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 10px; }
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 11px; font-weight: 600; color: var(--ink-soft); margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; font-family: inherit; font-size: 13px; color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: #fbfcfe;
+  }
+  .field textarea { resize: vertical; min-height: 58px; }
+  .row { display: flex; gap: 8px; }
+  .row .field { flex: 1; }
+  .hint { font-size: 11.5px; line-height: 1.55; color: var(--ink-soft); background: #f4f7fb;
+          border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin-bottom: 14px; }
+  .btnrow { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+  .empty { font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; }
+
+  dialog { border: 0; border-radius: 14px; padding: 0; max-width: 760px; width: 92vw; box-shadow: 0 24px 70px -18px rgba(15,27,45,.5); }
+  dialog::backdrop { background: rgba(15,27,45,.45); }
+  .dlg-head { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+  .dlg-head h3 { font-size: 14px; }
+  .dlg-body { padding: 16px 18px; }
+  textarea#io { width: 100%; height: 320px; font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+                border: 1px solid var(--line); border-radius: 10px; padding: 11px; background: #fbfcfe; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600;
+          color: var(--ink-soft); background: #f2f5f9; border: 1px solid var(--line);
+          padding: 3px 8px; border-radius: 999px; cursor: pointer; }
+  .chip i { width: 9px; height: 9px; border-radius: 3px; display: block; }
+  .blk { cursor: grab; }
+  .blk.sel rect { stroke-width: 2.5; }
+  text { user-select: none; pointer-events: none; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Automated Line — Plan Editor</h1>
+    <p>Drag blocks, draw branches, annotate — then export and send it back.</p>
+  </div>
+  <div class="spacer"></div>
+  <button id="btnAdd">+ Instrument</button>
+  <button id="btnBranch">Draw branch</button>
+  <button id="btnZoomOut">−</button>
+  <button id="btnZoomIn">+</button>
+  <button id="btnReset">Reset</button>
+  <button id="btnExport" class="primary">Export ▸</button>
+</header>
+
+<main>
+  <div id="stage"><svg id="svg"></svg></div>
+  <aside>
+    <div class="hint" id="hint">
+      <b>How to use</b><br />
+      • Drag a block to move it.<br />
+      • Click a block to rename it and add a note (“this is the DxH 2s”).<br />
+      • <b>Draw branch</b>: click the block, then click where it meets the line.<br />
+      • Press <b>Delete</b> to remove what’s selected.<br />
+      • When done, hit <b>Export</b> and paste the text back to me.
+    </div>
+    <div class="legend" id="legend"></div>
+    <div id="inspector"><p class="empty">Nothing selected. Click a block to edit it, or drag one to move it.</p></div>
+  </aside>
+</main>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3 id="dlgTitle">Export</h3>
+    <div class="spacer" style="flex:1"></div>
+    <button id="btnCopy">Copy</button>
+    <button id="btnLoad">Load pasted</button>
+    <button id="dlgClose">Close</button>
+  </div>
+  <div class="dlg-body"><textarea id="io" spellcheck="false"></textarea></div>
+</dialog>
+
+<script>
+// ---------------------------------------------------------------------------
+// Seed = the layout currently built in the 3D map. Coordinates are the same
+// world units used by src/layout/stations.js: +X runs along the line, z = 0 is
+// the transport-track centreline, negative z is behind the track.
+// ---------------------------------------------------------------------------
+const DOMAINS = {
+  preanalytic: ['Pre-analytic', '#17b0a4'],
+  centrifuge:  ['Centrifuge', '#5b6b82'],
+  coagulation: ['Coagulation', '#e8933a'],
+  hematology:  ['Hematology', '#e0455f'],
+  immunoassay: ['Immunoassay', '#8b5cf6'],
+  chemistry:   ['Chemistry', '#2f6df6'],
+  command:     ['Command Central', '#3a4a63'],
+  sms:         ['Sample Mgmt (SMS)', '#7c8ba1'],
+  outlet:      ['Outlet / Stockyards', '#4f7fb3'],
+};
+
+const SEED = {
+  spine: { startX: -4, endX: 237 },
+  blocks: [
+    { id:'inlet',        name:'Dynamic Inlet',                domain:'preanalytic', x:6.5,   z:-4.9,  w:9,    d:6,   note:'' },
+    { id:'centrifuges',  name:'Centrifuges',                  domain:'centrifuge',  x:21,    z:-11.4, w:14,   d:12,  note:'' },
+    { id:'decapper',     name:'Decapper',                     domain:'preanalytic', x:35,    z:-4.9,  w:8,    d:6,   note:'' },
+    { id:'aliquoter',    name:'Aliquoter',                    domain:'preanalytic', x:47.5,  z:-5.15, w:11,   d:6.5, note:'' },
+    { id:'coagulation',  name:'Coagulation',                  domain:'coagulation', x:66,    z:-9.9,  w:20,   d:8,   note:'' },
+    { id:'cmdHema',      name:'Command Central · Hematology', domain:'command',     x:85,    z:-16.8, w:7,    d:3.6, note:'' },
+    { id:'hematology',   name:'Hematology',                   domain:'hematology',  x:90,    z:-10.4, w:22,   d:8,   note:'' },
+    { id:'sms1',         name:'SMS 1',                        domain:'sms',         x:107,   z:-4.4,  w:6.5,  d:5,   note:'' },
+    { id:'immunoassay1', name:'Immunoassay 1',                domain:'immunoassay', x:120,   z:-10.65,w:13,   d:8.5, note:'' },
+    { id:'immunoassay2', name:'Immunoassay 2',                domain:'immunoassay', x:138.5, z:-10.65,w:18,   d:8.5, note:'' },
+    { id:'sms2',         name:'SMS 2',                        domain:'sms',         x:153.75,z:-4.4,  w:6.5,  d:5,   note:'' },
+    { id:'chemistry',    name:'Chemistry',                    domain:'chemistry',   x:168,   z:-13.4, w:16,   d:14,  note:'' },
+    { id:'cmdChem',      name:'Command Central · Chemistry',  domain:'command',     x:186,   z:-16.8, w:7,    d:3.6, note:'' },
+    { id:'outlet',       name:'Outlet 2',                     domain:'outlet',      x:184,   z:-4.9,  w:10,   d:6,   note:'' },
+    { id:'secDecapper',  name:'Secondary Decapper',           domain:'preanalytic', x:196,   z:-4.65, w:8,    d:5.5, note:'' },
+    { id:'recapper',     name:'Recapper',                     domain:'preanalytic', x:207.5, z:-4.9,  w:9,    d:6,   note:'' },
+    { id:'stockyards',   name:'Stockyards',                   domain:'outlet',      x:223,   z:-9.9,  w:16,   d:8,   note:'' },
+  ],
+  branches: [],
+};
+
+const clone = (o) => JSON.parse(JSON.stringify(o));
+let state = load() || clone(SEED);
+let scale = 4.2;
+let sel = null;              // {kind:'block'|'branch', id}
+let branchMode = false;
+let pendingBranch = null;    // first click of a branch
+
+const Z_MIN = -30, Z_MAX = 8;
+const PAD = 26;
+
+const svg = document.getElementById('svg');
+const stage = document.getElementById('stage');
+
+const sx = (x) => PAD + (x - state.spine.startX + 6) * scale;
+const sy = (z) => PAD + (z - Z_MIN) * scale;
+const wx = (px) => (px - PAD) / scale + state.spine.startX - 6;
+const wz = (py) => (py - PAD) / scale + Z_MIN;
+const snap = (v) => Math.round(v * 2) / 2;
+
+function el(tag, attrs = {}, parent = null) {
+  const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+function render() {
+  const W = sx(state.spine.endX) + PAD + 20;
+  const H = sy(Z_MAX) + PAD;
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.innerHTML = '';
+
+  // Deck backdrop
+  el('rect', { x: sx(state.spine.startX - 4), y: sy(-23), width: (state.spine.endX - state.spine.startX + 8) * scale,
+               height: 27 * scale, fill: '#ffffff', stroke: '#e2e8f1', rx: 4 }, svg);
+
+  // Grid every 10 units
+  for (let x = 0; x <= state.spine.endX; x += 10) {
+    el('line', { x1: sx(x), y1: sy(Z_MIN + 4), x2: sx(x), y2: sy(Z_MAX), stroke: '#eef2f7' }, svg);
+    el('text', { x: sx(x), y: sy(Z_MAX) - 4, 'font-size': 9, fill: '#aab4c3', 'text-anchor': 'middle' }, svg)
+      .textContent = x;
+  }
+
+  // The main transport line (spine at z = 0)
+  el('line', { x1: sx(state.spine.startX), y1: sy(0), x2: sx(state.spine.endX), y2: sy(0),
+               stroke: '#36a86a', 'stroke-width': 7, 'stroke-linecap': 'round', opacity: .85 }, svg);
+  el('text', { x: sx(state.spine.startX) + 4, y: sy(0) + 20, 'font-size': 10, fill: '#2f7a4c', 'font-weight': 700 }, svg)
+    .textContent = 'MAIN TRANSPORT LINE';
+
+  // Branches
+  state.branches.forEach((b) => {
+    const g = el('g', { class: 'branch', 'data-id': b.id }, svg);
+    el('line', { x1: sx(b.x1), y1: sy(b.z1), x2: sx(b.x2), y2: sy(b.z2),
+                 stroke: sel && sel.kind === 'branch' && sel.id === b.id ? '#e0455f' : '#36a86a',
+                 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-dasharray': '7 4' }, g);
+    // fat invisible hit line
+    el('line', { x1: sx(b.x1), y1: sy(b.z1), x2: sx(b.x2), y2: sy(b.z2),
+                 stroke: 'transparent', 'stroke-width': 14, style: 'cursor:pointer' }, g);
+    if (b.label) {
+      el('text', { x: (sx(b.x1) + sx(b.x2)) / 2, y: (sy(b.z1) + sy(b.z2)) / 2 - 5,
+                   'font-size': 9.5, fill: '#2f7a4c', 'text-anchor': 'middle', 'font-weight': 600 }, g)
+        .textContent = b.label;
+    }
+    g.addEventListener('pointerdown', (e) => { e.stopPropagation(); select('branch', b.id); });
+  });
+
+  // Blocks
+  state.blocks.forEach((b) => {
+    const color = (DOMAINS[b.domain] || ['', '#7c8ba1'])[1];
+    const isSel = sel && sel.kind === 'block' && sel.id === b.id;
+    const g = el('g', { class: 'blk' + (isSel ? ' sel' : ''), 'data-id': b.id }, svg);
+    el('rect', {
+      x: sx(b.x - b.w / 2), y: sy(b.z - b.d / 2), width: b.w * scale, height: b.d * scale,
+      rx: 3, fill: color + '22', stroke: color, 'stroke-width': isSel ? 2.5 : 1.4,
+    }, g);
+    const cx = sx(b.x), cy = sy(b.z);
+    const fs = Math.min(11, Math.max(7.5, b.w * scale / 7));
+    const t = el('text', { x: cx, y: cy + 3, 'font-size': fs,
+                           fill: '#22314a', 'text-anchor': 'middle', 'font-weight': 700 }, g);
+    // Trim the label to whatever actually fits inside the block.
+    const maxChars = Math.max(3, Math.floor((b.w * scale - 6) / (fs * 0.56)));
+    t.textContent = b.name.length > maxChars ? b.name.slice(0, maxChars - 1) + '…' : b.name;
+    t.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'title'))
+      .textContent = b.name;
+    if (b.note) {
+      el('circle', { cx: sx(b.x + b.w / 2) - 6, cy: sy(b.z - b.d / 2) + 6, r: 3.5, fill: '#e8933a' }, g);
+    }
+    g.addEventListener('pointerdown', (e) => onBlockDown(e, b));
+  });
+
+  renderLegend();
+  renderInspector();
+  save();
+}
+
+function renderLegend() {
+  const wrap = document.getElementById('legend');
+  wrap.innerHTML = '';
+  Object.entries(DOMAINS).forEach(([k, [label, color]]) => {
+    const c = document.createElement('span');
+    c.className = 'chip';
+    c.innerHTML = `<i style="background:${color}"></i>${label}`;
+    wrap.appendChild(c);
+  });
+}
+
+// --------------------------- interaction ---------------------------------
+function select(kind, id) { sel = { kind, id }; render(); }
+
+function onBlockDown(e, b) {
+  e.stopPropagation();
+  if (branchMode) { branchClick(b.x, b.z, b.id); return; }
+  select('block', b.id);
+  const startX = e.clientX, startY = e.clientY;
+  const ox = b.x, oz = b.z;
+  const move = (ev) => {
+    b.x = snap(ox + (ev.clientX - startX) / scale);
+    b.z = snap(oz + (ev.clientY - startY) / scale);
+    render();
+  };
+  const up = () => {
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+}
+
+svg.addEventListener('pointerdown', (e) => {
+  const pt = svg.getBoundingClientRect();
+  const x = snap(wx(e.clientX - pt.left)), z = snap(wz(e.clientY - pt.top));
+  if (branchMode) { branchClick(x, z, null); return; }
+  sel = null; render();
+});
+
+function branchClick(x, z, blockId) {
+  if (!pendingBranch) {
+    pendingBranch = { x, z, blockId };
+    document.getElementById('hint').innerHTML =
+      '<b>Branch started.</b><br />Now click the second point — usually on the main transport line.';
+    return;
+  }
+  const b = {
+    id: 'br' + Date.now().toString(36),
+    x1: pendingBranch.x, z1: pendingBranch.z, x2: x, z2: z,
+    from: pendingBranch.blockId || null, to: blockId || null, label: '',
+  };
+  state.branches.push(b);
+  pendingBranch = null;
+  setBranchMode(false);
+  select('branch', b.id);
+}
+
+function setBranchMode(on) {
+  branchMode = on;
+  pendingBranch = null;
+  document.getElementById('btnBranch').classList.toggle('on', on);
+  document.getElementById('hint').innerHTML = on
+    ? '<b>Branch mode.</b><br />Click the instrument, then click where the branch meets the main line.'
+    : '<b>How to use</b><br />• Drag a block to move it.<br />• Click a block to rename it and add a note.<br />• <b>Draw branch</b>: click the block, then the line.<br />• Press <b>Delete</b> to remove the selection.<br />• Hit <b>Export</b> and paste the text back to me.';
+}
+
+// --------------------------- inspector -----------------------------------
+function renderInspector() {
+  const host = document.getElementById('inspector');
+  if (!sel) { host.innerHTML = '<p class="empty">Nothing selected. Click a block to edit it, or drag one to move it.</p>'; return; }
+
+  if (sel.kind === 'branch') {
+    const b = state.branches.find((n) => n.id === sel.id);
+    if (!b) { sel = null; return renderInspector(); }
+    host.innerHTML = `
+      <h2>Branch</h2>
+      <div class="field"><label>Label (what runs on it)</label><input id="fLabel" value="${esc(b.label)}" placeholder="e.g. spur to DxI 3" /></div>
+      <div class="row">
+        <div class="field"><label>From X</label><input id="fx1" type="number" step="0.5" value="${b.x1}" /></div>
+        <div class="field"><label>From Z</label><input id="fz1" type="number" step="0.5" value="${b.z1}" /></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>To X</label><input id="fx2" type="number" step="0.5" value="${b.x2}" /></div>
+        <div class="field"><label>To Z</label><input id="fz2" type="number" step="0.5" value="${b.z2}" /></div>
+      </div>
+      <div class="btnrow"><button class="danger" id="fDel">Delete branch</button></div>`;
+    bind('fLabel', (v) => b.label = v);
+    ['x1','z1','x2','z2'].forEach((k) => bind('f' + k, (v) => b[k] = parseFloat(v) || 0, true));
+    document.getElementById('fDel').onclick = () => {
+      state.branches = state.branches.filter((n) => n.id !== b.id); sel = null; render();
+    };
+    return;
+  }
+
+  const b = state.blocks.find((n) => n.id === sel.id);
+  if (!b) { sel = null; return renderInspector(); }
+  host.innerHTML = `
+    <h2>Instrument</h2>
+    <div class="field"><label>Name</label><input id="fName" value="${esc(b.name)}" /></div>
+    <div class="field"><label>Domain (colour)</label><select id="fDom">
+      ${Object.entries(DOMAINS).map(([k, [l]]) => `<option value="${k}"${k === b.domain ? ' selected' : ''}>${l}</option>`).join('')}
+    </select></div>
+    <div class="row">
+      <div class="field"><label>Along line (X)</label><input id="fX" type="number" step="0.5" value="${b.x}" /></div>
+      <div class="field"><label>Across (Z)</label><input id="fZ" type="number" step="0.5" value="${b.z}" /></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Width</label><input id="fW" type="number" step="0.5" value="${b.w}" /></div>
+      <div class="field"><label>Depth</label><input id="fD" type="number" step="0.5" value="${b.d}" /></div>
+    </div>
+    <div class="field"><label>Note — tell me what this really is</label>
+      <textarea id="fNote" placeholder="e.g. this is the DxH 2s; it needs its own spur; move it before the SMS">${esc(b.note)}</textarea></div>
+    <div class="btnrow">
+      <button id="fDup">Duplicate</button>
+      <button class="danger" id="fDel">Delete</button>
+    </div>`;
+  bind('fName', (v) => b.name = v);
+  bind('fNote', (v) => b.note = v);
+  bind('fDom', (v) => b.domain = v, false, 'change');
+  [['fX','x'],['fZ','z'],['fW','w'],['fD','d']].forEach(([id, k]) => bind(id, (v) => b[k] = parseFloat(v) || 0, true));
+  document.getElementById('fDup').onclick = () => {
+    const c = clone(b); c.id = b.id + '_copy' + Date.now().toString(36); c.x += b.w + 3; c.name += ' (copy)';
+    state.blocks.push(c); select('block', c.id);
+  };
+  document.getElementById('fDel').onclick = () => {
+    state.blocks = state.blocks.filter((n) => n.id !== b.id); sel = null; render();
+  };
+}
+
+function bind(id, fn, rerender = false, evt = 'input') {
+  const n = document.getElementById(id);
+  if (!n) return;
+  n.addEventListener(evt, (e) => {
+    fn(e.target.value);
+    if (rerender) { const a = document.activeElement.id; render(); const r = document.getElementById(a); if (r) r.focus(); }
+    else save();
+  });
+}
+const esc = (s) => String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+// --------------------------- toolbar -------------------------------------
+document.getElementById('btnAdd').onclick = () => {
+  const b = { id: 'new' + Date.now().toString(36), name: 'New instrument', domain: 'preanalytic',
+              x: snap(wx(stage.scrollLeft + 300)), z: -8, w: 10, d: 7, note: '' };
+  state.blocks.push(b); select('block', b.id);
+};
+document.getElementById('btnBranch').onclick = () => setBranchMode(!branchMode);
+document.getElementById('btnZoomIn').onclick = () => { scale = Math.min(12, scale * 1.25); render(); };
+document.getElementById('btnZoomOut').onclick = () => { scale = Math.max(1.6, scale / 1.25); render(); };
+document.getElementById('btnReset').onclick = () => {
+  if (confirm('Reset the plan back to the current 3D layout? Your edits will be lost.')) {
+    state = clone(SEED); sel = null; render();
+  }
+};
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { setBranchMode(false); sel = null; render(); }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && sel &&
+      !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
+    if (sel.kind === 'block') state.blocks = state.blocks.filter((n) => n.id !== sel.id);
+    else state.branches = state.branches.filter((n) => n.id !== sel.id);
+    sel = null; render();
+  }
+});
+
+// --------------------------- export / import ------------------------------
+const dlg = document.getElementById('dlg');
+document.getElementById('btnExport').onclick = () => {
+  document.getElementById('io').value = summary() + '\n\n--- machine-readable, keep this ---\n' + JSON.stringify(state, null, 2);
+  dlg.showModal();
+};
+document.getElementById('dlgClose').onclick = () => dlg.close();
+document.getElementById('btnCopy').onclick = async () => {
+  const ta = document.getElementById('io'); ta.select();
+  try { await navigator.clipboard.writeText(ta.value); } catch { document.execCommand('copy'); }
+  const b = document.getElementById('btnCopy'); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1200);
+};
+document.getElementById('btnLoad').onclick = () => {
+  const txt = document.getElementById('io').value;
+  const i = txt.indexOf('{');
+  try {
+    const parsed = JSON.parse(txt.slice(i));
+    if (!parsed.blocks) throw new Error('no blocks');
+    state = parsed; sel = null; render(); dlg.close();
+  } catch (err) { alert('Could not read that. Paste the full JSON block (starting at "{").'); }
+};
+
+function summary() {
+  const L = [];
+  L.push('AUTOMATED LINE — PLAN FEEDBACK');
+  L.push('Coordinates: X runs along the line, z=0 is the transport-line centreline, negative z is behind it.');
+  L.push('');
+  L.push('INSTRUMENTS (in order along the line):');
+  [...state.blocks].sort((a, b) => a.x - b.x).forEach((b, i) => {
+    L.push(`${String(i + 1).padStart(2, '0')}. ${b.name}  [${(DOMAINS[b.domain] || ['?'])[0]}]`);
+    L.push(`    position x=${b.x}, z=${b.z}   size ${b.w} x ${b.d}`);
+    if (b.note) L.push(`    NOTE: ${b.note}`);
+  });
+  L.push('');
+  L.push(`BRANCHES (${state.branches.length}):`);
+  if (!state.branches.length) L.push('  (none drawn)');
+  state.branches.forEach((b, i) => {
+    const from = b.from ? (state.blocks.find((n) => n.id === b.from) || {}).name || b.from : `(${b.x1}, ${b.z1})`;
+    L.push(`${String(i + 1).padStart(2, '0')}. ${from} → (${b.x2}, ${b.z2})${b.label ? '  — ' + b.label : ''}`);
+  });
+  return L.join('\n');
+}
+
+// --------------------------- persistence ---------------------------------
+function save() { try { localStorage.setItem('linePlan', JSON.stringify(state)); } catch {} }
+function load() { try { return JSON.parse(localStorage.getItem('linePlan')); } catch { return null; } }
+
+setBranchMode(false);
+render();
+</script>
+</body>
+</html>
