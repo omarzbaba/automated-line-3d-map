@@ -97,6 +97,7 @@
       <b>How to use</b><br />
       • Drag a block to move it.<br />
       • Click a block to rename it and add a note (“this is the DxH 2s”).<br />
+      • Select a block and press <b>R</b> to rotate it 90° (Shift+R the other way).<br />
       • <b>Draw branch</b>: click the block, then click where it meets the line.<br />
       • Press <b>Delete</b> to remove what’s selected.<br />
       • When done, hit <b>Export</b> and paste the text back to me.
@@ -230,20 +231,40 @@ function render() {
   state.blocks.forEach((b) => {
     const color = (DOMAINS[b.domain] || ['', '#7c8ba1'])[1];
     const isSel = sel && sel.kind === 'block' && sel.id === b.id;
-    const g = el('g', { class: 'blk' + (isSel ? ' sel' : ''), 'data-id': b.id }, svg);
+    const rot = ((b.rot || 0) % 360 + 360) % 360;
+    const cx = sx(b.x), cy = sy(b.z);
+
+    // The whole block rotates about its own centre, so X/Z stay the anchor.
+    const g = el('g', {
+      class: 'blk' + (isSel ? ' sel' : ''), 'data-id': b.id,
+      transform: `rotate(${rot} ${cx} ${cy})`,
+    }, svg);
+
     el('rect', {
       x: sx(b.x - b.w / 2), y: sy(b.z - b.d / 2), width: b.w * scale, height: b.d * scale,
       rx: 3, fill: color + '22', stroke: color, 'stroke-width': isSel ? 2.5 : 1.4,
     }, g);
-    const cx = sx(b.x), cy = sy(b.z);
-    const fs = Math.min(11, Math.max(7.5, b.w * scale / 7));
+
+    // Front-face tick so the facing direction is readable at any angle.
+    el('line', {
+      x1: sx(b.x - b.w / 2) + 3, y1: sy(b.z + b.d / 2) - 2,
+      x2: sx(b.x + b.w / 2) - 3, y2: sy(b.z + b.d / 2) - 2,
+      stroke: color, 'stroke-width': 3, 'stroke-linecap': 'round', opacity: .95,
+    }, g);
+
+    // Keep the label upright-ish: text runs along the block's long edge.
+    const flipped = rot > 90 && rot <= 270;
+    const along = (rot === 90 || rot === 270) ? b.d : b.w;
+    const fs = Math.min(11, Math.max(7.5, along * scale / 7));
+    const tg = el('g', flipped ? { transform: `rotate(180 ${cx} ${cy})` } : {}, g);
     const t = el('text', { x: cx, y: cy + 3, 'font-size': fs,
-                           fill: '#22314a', 'text-anchor': 'middle', 'font-weight': 700 }, g);
+                           fill: '#22314a', 'text-anchor': 'middle', 'font-weight': 700 }, tg);
     // Trim the label to whatever actually fits inside the block.
-    const maxChars = Math.max(3, Math.floor((b.w * scale - 6) / (fs * 0.56)));
+    const maxChars = Math.max(3, Math.floor((along * scale - 6) / (fs * 0.56)));
     t.textContent = b.name.length > maxChars ? b.name.slice(0, maxChars - 1) + '…' : b.name;
     t.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'title'))
-      .textContent = b.name;
+      .textContent = b.name + (rot ? `  (rotated ${rot}°)` : '');
+
     if (b.note) {
       el('circle', { cx: sx(b.x + b.w / 2) - 6, cy: sy(b.z - b.d / 2) + 6, r: 3.5, fill: '#e8933a' }, g);
     }
@@ -366,6 +387,15 @@ function renderInspector() {
       <div class="field"><label>Width</label><input id="fW" type="number" step="0.5" value="${b.w}" /></div>
       <div class="field"><label>Depth</label><input id="fD" type="number" step="0.5" value="${b.d}" /></div>
     </div>
+    <div class="field">
+      <label>Rotation — facing direction (or press R)</label>
+      <div class="btnrow" style="margin-bottom:6px">
+        <button id="fRotL" title="Rotate 90° anticlockwise">↺ 90°</button>
+        <button id="fRotR" title="Rotate 90° clockwise">↻ 90°</button>
+        <button id="fRot0" title="Reset to facing the line">Reset 0°</button>
+      </div>
+      <input id="fRot" type="number" step="5" value="${((b.rot || 0) % 360 + 360) % 360}" />
+    </div>
     <div class="field"><label>Note — tell me what this really is</label>
       <textarea id="fNote" placeholder="e.g. this is the DxH 2s; it needs its own spur; move it before the SMS">${esc(b.note)}</textarea></div>
     <div class="btnrow">
@@ -376,6 +406,10 @@ function renderInspector() {
   bind('fNote', (v) => b.note = v);
   bind('fDom', (v) => b.domain = v, false, 'change');
   [['fX','x'],['fZ','z'],['fW','w'],['fD','d']].forEach(([id, k]) => bind(id, (v) => b[k] = parseFloat(v) || 0, true));
+  bind('fRot', (v) => b.rot = parseFloat(v) || 0, true);
+  document.getElementById('fRotL').onclick = () => rotateBlock(b, -90);
+  document.getElementById('fRotR').onclick = () => rotateBlock(b, 90);
+  document.getElementById('fRot0').onclick = () => { b.rot = 0; render(); };
   document.getElementById('fDup').onclick = () => {
     const c = clone(b); c.id = b.id + '_copy' + Date.now().toString(36); c.x += b.w + 3; c.name += ' (copy)';
     state.blocks.push(c); select('block', c.id);
@@ -410,8 +444,19 @@ document.getElementById('btnReset').onclick = () => {
     state = clone(SEED); sel = null; render();
   }
 };
+function rotateBlock(b, delta) {
+  b.rot = (((b.rot || 0) + delta) % 360 + 360) % 360;
+  render();
+}
+
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { setBranchMode(false); sel = null; render(); }
+  // R rotates the selected instrument 90° (Shift+R goes anticlockwise).
+  if ((e.key === 'r' || e.key === 'R') && sel && sel.kind === 'block' &&
+      !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
+    const b = state.blocks.find((n) => n.id === sel.id);
+    if (b) rotateBlock(b, e.shiftKey ? -90 : 90);
+  }
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel &&
       !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
     if (sel.kind === 'block') state.blocks = state.blocks.filter((n) => n.id !== sel.id);
@@ -449,8 +494,9 @@ function summary() {
   L.push('');
   L.push('INSTRUMENTS (in order along the line):');
   [...state.blocks].sort((a, b) => a.x - b.x).forEach((b, i) => {
+    const rot = ((b.rot || 0) % 360 + 360) % 360;
     L.push(`${String(i + 1).padStart(2, '0')}. ${b.name}  [${(DOMAINS[b.domain] || ['?'])[0]}]`);
-    L.push(`    position x=${b.x}, z=${b.z}   size ${b.w} x ${b.d}`);
+    L.push(`    position x=${b.x}, z=${b.z}   size ${b.w} x ${b.d}   rotation ${rot}°`);
     if (b.note) L.push(`    NOTE: ${b.note}`);
   });
   L.push('');
